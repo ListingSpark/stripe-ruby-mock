@@ -279,6 +279,7 @@ module StripeMock
         },
         :cancel_at_period_end => false,
         :canceled_at => nil,
+        :created => Time.now.utc.to_i,
         :ended_at => nil,
         :start => 1308595038,
         :object => "subscription",
