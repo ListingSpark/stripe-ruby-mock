@@ -94,6 +94,17 @@ module StripeMock
         subscription = Data.mock_subscription({ id: (params[:id] || new_id('su')) })
         subscription.merge!(custom_subscription_params(plan, customer, params))
 
+        invoice_id = new_id('in')
+        invoice_item = Data.mock_line_item()
+
+        charge_id = new_id('ch')
+
+        invoice_params = {subscription: subscription['id'], customer: customer_id, charge: charge_id, paid: true}
+        charge_params = {customer: customer_id}
+
+        invoices[invoice_id] = Data.mock_invoice([invoice_item], invoice_params.merge(:id => invoice_id))
+        charges[charge_id] = Data.mock_charge(charge_params.merge :id => charge_id)
+
         if params[:coupon]
           coupon_id = params[:coupon]
 
