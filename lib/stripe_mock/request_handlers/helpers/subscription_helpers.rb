@@ -29,7 +29,13 @@ module StripeMock
         invoice_id = new_id('in')
         id = new_id('ch')
 
-        invoice_params = {:id => invoice_id, :customer => cus[:id], :charge => id, :subscription => sub[:id]}
+        invoice_params = {
+          :id => invoice_id,
+          :customer => cus[:id],
+          :charge => id,
+          :subscription => sub[:id],
+          :paid => true
+        }
         invoice_item = Data.mock_line_item()
         invoices[invoice_id] = Data.mock_invoice([invoice_item], invoice_params)
         charges[id] = Data.mock_charge(:id => id, :customer => cus[:id], :amount => sub[:plan][:amount], :invoice => invoice_id)
