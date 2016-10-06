@@ -61,7 +61,8 @@ module StripeMock
           id: charge_id,
           customer: invoices[$1][:customer],
           created: Time.now.utc.to_i,
-          invoice: invoices[$1][:id]
+          invoice: invoices[$1][:id],
+          amount: subscriptions[invoices[$1][:subscription]][:plan][:amount]
         }
         charges[charge_id] = Data.mock_charge(charge_params)
 
