@@ -38,7 +38,10 @@ module StripeMock
           result.delete_if { |k,v| v[:customer] != params[:customer] }
         end
 
-        Data.mock_list_object(result.values, params)
+        # Stripe returns invoices sorted in the most recently created.
+        # https://stripe.com/docs/api#list_invoices
+        recent_invoices = result.values.sort_by{|invoice| invoice[:date] }.reverse!
+        Data.mock_list_object(recent_invoices, params)
       end
 
       def get_invoice(route, method_url, params, headers)
@@ -56,15 +59,27 @@ module StripeMock
         route =~ method_url
         assert_existence :invoice, $1, invoices[$1]
 
-        charge_id = new_id('ch')
-        charge_params = {
-          id: charge_id,
-          customer: invoices[$1][:customer],
-          created: Time.now.utc.to_i
-        }
-        charges[charge_id] = Data.mock_charge(charge_params)
+        if handler = StripeMock.instance.error_queue.error_for_handler_name(:new_charge)
+          invoices[$1].merge!(:paid => false, :attempted => true, :charge => nil)
+          if invoices[$1][:subscription]
+            subscriptions[invoices[$1][:subscription]].merge!({status: 'unpaid'})
+          end
+        else
+          charge_id = new_id('ch')
+          charge_params = {
+            id: charge_id,
+            customer: invoices[$1][:customer],
+            created: Time.now.utc.to_i
+          }
+          charges[charge_id] = Data.mock_charge(charge_params)
 
-        invoices[$1].merge!(:paid => true, :attempted => true, :charge => charge_id)
+          invoices[$1].merge!(:paid => true, :attempted => true, :charge => charge_id)
+          if invoices[$1][:subscription]
+            subscriptions[invoices[$1][:subscription]].merge!({status: 'active'})
+          end
+        end
+
+        invoices[$1]
       end
 
       def upcoming_invoice(route, method_url, params, headers)
