@@ -123,6 +123,14 @@ module StripeMock
       end
 
       def create_refund(route, method_url, params, headers)
+        if params[:amount].nil?
+          require_param(:amount)
+        elsif non_integer_charge_amount?(params)
+          raise Stripe::InvalidRequestError.new("Invalid integer: #{params[:amount]}", 'amount', 400)
+        elsif non_positive_charge_amount?(params)
+          raise Stripe::InvalidRequestError.new('Invalid positive integer', 'amount', 400)
+        end
+
         charge = get_charge(route, method_url, params, headers)
 
         refund = Data.mock_refund params.merge(
